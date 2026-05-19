@@ -67,4 +67,12 @@ public class EmployeeController {
         employeeService.deleteEmployeeById(employeeId);
         return new ResponseEntity<>("Deleted Successfully", HttpStatus.OK);
     }
+
+    // 5. Endpoint for find employee by id(Single Employee)
+    @GetMapping("/employees/{id}")
+    public ResponseEntity<EmployeeResponseDTO> getEmployeeById(@PathVariable("id") Long employeeId) {
+        EmployeeResponseDTO employee = employeeService.fetchEmployeeById(employeeId);
+
+        return new ResponseEntity<>(employee, HttpStatus.OK);
+    }
 }

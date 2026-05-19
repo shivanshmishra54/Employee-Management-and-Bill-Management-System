@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.attendance.DTO.AttendanceRequestDto;
 import com.attendance.DTO.AttendanceResponseDto;
+import com.attendance.DTO.EmployeeDto;
 import com.attendance.Entity.Attendance;
 import com.attendance.Repository.AttendanceRepository;
 
@@ -18,6 +19,9 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Autowired
     private AttendanceRepository attendanceRepository;
+
+    @Autowired
+    private EmployeeClient employeeClient;
 
     private void calculateHoursAndOvertime(Attendance attendance) {
         if (attendance.getCheckInTime() != null && attendance.getCheckOutTime() != null) {
@@ -52,6 +56,12 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public AttendanceResponseDto addAttendance(AttendanceRequestDto request) {
+
+        // STEP 1: Verify the employee exists using Feign Client
+        EmployeeDto employee = employeeClient.findEmployeeById(request.getEmployeeId());
+        System.out.println("Marking attendance for Employee: " + employee.getName());
+
+        // STEP 2: Proceed with saving the attendance
         Attendance attendance = new Attendance();
         attendance.setEmployeeId(request.getEmployeeId());
         attendance.setDate(request.getDate());
@@ -71,7 +81,15 @@ public class AttendanceServiceImpl implements AttendanceService {
     @Override
     public AttendanceResponseDto updateAttendance(Long attendanceId, AttendanceRequestDto request) {
         Attendance attendance = attendanceRepository.findById(attendanceId)
-                .orElseThrow(() -> new com.attendance.Exception.ResourceNotFoundException("Attendance", "id", attendanceId));
+                .orElseThrow(
+                        () -> new com.attendance.Exception.ResourceNotFoundException("Attendance", "id", attendanceId));
+
+        // Optional: If the request includes an Employee ID, verify it and update it
+        if (request.getEmployeeId() != null) {
+            EmployeeDto employee = employeeClient.findEmployeeById(request.getEmployeeId());
+            attendance.setEmployeeId(request.getEmployeeId());
+            System.out.println("Updating attendance for Employee: " + employee.getName());
+        }
 
         attendance.setDate(request.getDate());
         attendance.setCheckInTime(request.getCheckInTime());
@@ -88,8 +106,10 @@ public class AttendanceServiceImpl implements AttendanceService {
     }
 
     @Override
-    public List<AttendanceResponseDto> getAttendanceByEmployee(Long employeeId, LocalDate startDate, LocalDate endDate) {
-        List<Attendance> attendances = attendanceRepository.findByEmployeeIdAndDateBetween(employeeId, startDate, endDate);
+    public List<AttendanceResponseDto> getAttendanceByEmployee(Long employeeId, LocalDate startDate,
+            LocalDate endDate) {
+        List<Attendance> attendances = attendanceRepository.findByEmployeeIdAndDateBetween(employeeId, startDate,
+                endDate);
         return attendances.stream().map(this::mapToDto).collect(Collectors.toList());
     }
 

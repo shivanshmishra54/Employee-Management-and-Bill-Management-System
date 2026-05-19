@@ -107,4 +107,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         responseDto.setCurrLocation(employee.getCurrLocation());
         return responseDto;
     }
+
+    @Override
+    public EmployeeResponseDTO fetchEmployeeById(Long empId) {
+        Employee emp = employeeRepository.findById(empId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + empId));
+
+        return convertToResponseDto(emp);
+
+    }
 }

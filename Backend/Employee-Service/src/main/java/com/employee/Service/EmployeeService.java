@@ -21,4 +21,8 @@ public interface EmployeeService {
     // 4. Delete: Isme koi change nahi aayega, kyunki yeh sirf ID leta hai aur kuch
     // return nahi karta
     void deleteEmployeeById(Long empId);
+
+    // 5. Attendance service ki request ke liye ek endpoint
+    EmployeeResponseDTO fetchEmployeeById(Long empId);
+
 }
